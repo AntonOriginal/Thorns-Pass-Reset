@@ -1,11 +1,123 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Password Reset</title>
+    <title>Reset Password</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 450px;
+            width: 90%;
+        }
+        h1 { color: #333; margin-top: 0; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background: #5568d3; }
+        .success { color: #28a745; display: none; }
+        .error { color: #dc3545; display: none; }
+        .message { margin: 15px 0; }
+    </style>
 </head>
 <body>
-    <h1>Password Reset</h1>
-    <p class="success">Your password has been reset.</p>
-    <p>You can now close this page and return to the game to log in with your new password.</p>
+    <div class="container">
+        <h1>Reset Password</h1>
+        <div id="form">
+            <p>Enter your new password below:</p>
+            <input type="password" id="password" placeholder="New Password" />
+            <input type="password" id="confirm" placeholder="Confirm Password" />
+            <button onclick="resetPassword()">Reset Password</button>
+            <p class="message success" id="success">✅ Password reset successfully! You can now close this page and log in.</p>
+            <p class="message error" id="error"></p>
+        </div>
+    </div>
+
+    <script>
+        // Get access token from URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+
+        if (!accessToken) {
+            document.getElementById('error').textContent = 'Invalid or expired reset link.';
+            document.getElementById('error').style.display = 'block';
+            document.querySelector('button').disabled = true;
+        }
+
+        async function resetPassword() {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+            const errorEl = document.getElementById('error');
+            const successEl = document.getElementById('success');
+
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            if (password.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirm) {
+                errorEl.textContent = 'Passwords do not match.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Replace with your Supabase URL and anon key
+                const response = await fetch('YOUR_SUPABASE_URL/auth/v1/user', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': 'YOUR_SUPABASE_ANON_KEY',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+
+                if (response.ok) {
+                    successEl.style.display = 'block';
+                    document.getElementById('password').disabled = true;
+                    document.getElementById('confirm').disabled = true;
+                    document.querySelector('button').disabled = true;
+                } else {
+                    errorEl.textContent = 'Failed to reset password. Please try again.';
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                errorEl.textContent = 'An error occurred. Please try again.';
+                errorEl.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 </html>
